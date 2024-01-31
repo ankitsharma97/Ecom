@@ -1,0 +1,43 @@
+{% extends "./base.html" %} {% block content %}{% load cart %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Your Orders</h2>
+    <hr> {% if orders %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col">Order ID</th>
+                    <th scope="col">Product</th>
+                    <th scope="col">Image</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Price</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.product.Name }}</td>
+                    <td><img style="height: 80px;" class="rounded-circle" src="{{ order.product.img.url }}" alt=""></td>
+                    <td>{{ order.quantity }}</td>
+                    <td>{{ order.price|currency }}</td>
+                    <td>{{ order.date|date:"F d, Y" }}</td>
+                    <td>
+                        {% if order.status %}
+                        <span class="badge badge-success">Completed</span> {% else %}
+                        <span class="badge badge-warning">Pending</span> {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center">
+        <p>No orders available.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

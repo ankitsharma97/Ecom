@@ -1,0 +1,102 @@
+{% extends "./base.html" %}
+{% block content %}
+{% load cart %}
+
+<div class="border rounded p-4 m-4">
+    <h1 class="display-4 m-4">Your Cart</h1>
+    <hr>
+
+    <table class="table table-striped table-inverse border rounded">
+        <thead>
+            <tr>
+                <th>Sn.No</th>
+                <th>Name</th>
+                <th>Image</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Product Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cart in product %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ cart.Name }}</td>
+                    <td><img style="height: 80px;" class="rounded-circle" src="{{ cart.img.url }}" alt=""></td>
+                    <td>{{ cart.Price|currency }}</td>
+                    <td>{{ cart|cartCount:request.session.cart }}</td>
+                    <td>{{ cart|cartPrice:request.session.cart|currency }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="3"></th>
+                <th>Total</th>
+                <th>{{ product|cartTotal:request.session.cart|currency }}</th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <hr>
+    <!-- Button to Trigger Modal -->
+    <div class="row mt-3">
+        <div class="col-md-12">
+            <div class="m-3 p-3">
+                <button class="btn btn-dark border rounded float-right" data-toggle="modal" data-target="#exampleModal">Proceed to Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <!-- Modal content including user details form and order summary -->
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Complete Your Purchase</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- User details form -->
+                    <form action="{% url 'checkout' %}" method="POST">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="fullName">Full Name</label>
+                            <input type="text" class="form-control" id="fullName" name="fullName" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="address">Address</label>
+                            <textarea class="form-control" id="address" name="address" placeholder="Enter your address"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="Enter your phone number">
+                        </div>
+
+                        <h4 class="mt-4">Order Summary</h4>
+                        <table class="table">
+                            <!-- Display cart items and quantities -->
+                        </table>
+                        <h5>Total: {{ product|cartTotal:request.session.cart|currency }}</h5>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Continue Shopping</button>
+                            <input type="submit" class="btn btn-primary" value="Place Order">
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
