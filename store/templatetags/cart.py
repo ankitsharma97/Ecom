@@ -2,12 +2,20 @@ from django import template
 register = template.Library()
 
 @register.filter(name='isInCart')
-def isInCart(product,cart ):
+def isInCart(product, cart):
     keys = cart.keys()
     for id in keys:
-        if int(id) == product.id:
-            return True
+        try:
+            # Attempt to convert id to an integer
+            id_as_int = int(id)
+            if id_as_int == product.id:
+                return True
+        except ValueError:
+            # Handle the case where id is not a valid integer
+            if id.lower() == 'null':
+                continue  # Skip 'null' values
     return False
+
 
 @register.filter(name='cartCount')
 def cartCount(product,cart ):

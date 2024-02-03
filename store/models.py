@@ -29,6 +29,8 @@ class Product(models.Model):
     def get_product_id(ids):
         return Product.objects.filter(id__in = ids)
         
+    def saveP(self):
+        self.save()
         
     @staticmethod
     def get_all_product():
@@ -58,6 +60,7 @@ class Customer(models.Model):
     email = models.EmailField(max_length=254)
     phone_no = models.CharField(max_length=15) 
     password = models.CharField(max_length=50)
+    usertype = models.BooleanField(default = 0)
     
     def __str__(self):
         return self.email

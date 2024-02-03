@@ -5,6 +5,8 @@ from django.contrib.auth.hashers import make_password ,check_password
 from django.contrib.auth.decorators import login_required
 from django.views import View
 from .models import Product,Category,Customer,Order
+from django.contrib.auth import logout
+
 
 class IndexView(View):
     def get(self, request):
@@ -67,6 +69,8 @@ class SigninView(View):
         email = request.POST.get('email')
         phone_no = request.POST.get('phone_no')
         password = request.POST.get('password')
+        usertype_str = request.POST.get('usertype', 'False')
+        usertype = usertype_str.lower() == 'true' 
 
         values = {
             'name': name,
@@ -81,11 +85,15 @@ class SigninView(View):
                 name=name,
                 email=email,
                 phone_no=phone_no,
-                password=password
+                password=password,
+                usertype=usertype,
             )
             customer.password = make_password(customer.password)
             customer.register()
-            return redirect('index')
+            if usertype:
+                return redirect('company')   
+            else:
+                return redirect('index')
         else:
             data = {
                 'values': values,
@@ -125,22 +133,39 @@ class LoginView(View):
     def post(self, request):
         email = request.POST.get('email')
         password = request.POST.get('password')
+        entereduser_str = request.POST.get('usertype', 'False')
+        entereduser = entereduser_str.lower() == 'true' 
         customer = Customer.getCustomerByEmail(email)
+        # print(entereduser ^ customer.usertype)
+        # return HttpResponse("hi")
         error_msg = None
 
         if customer:
             if check_password(password, customer.password):
-                request.session['customer'] = customer.id
-                request.session['email'] = customer.email
                 
-                return redirect('index')
+                if entereduser == customer.usertype:
+                    request.session['customer'] = customer.id
+                    request.session['email'] = customer.email
+                    request.session['usertpye'] = customer.usertype
+                    
+                    if entereduser:
+                        return redirect('company')
+                    else:
+                        return redirect('index')
+                else:
+                    error_msg = "usertype is invalid"
+                                
+                
+                
             else:
                 error_msg = "Email or password is invalid"
         else:
             error_msg = "Email or password is invalid"
 
         return render(request, self.template_name, {'error_msg': error_msg})
-from django.contrib.auth import logout
+        
+        
+
 
 def LogOut(request):
     logout(request)
@@ -150,14 +175,24 @@ def LogOut(request):
 class CartView(View):
     def get(self, request):
         cart = request.session.get('cart')
+
         if cart:
-            ids = list(cart.keys())
+            # Convert valid string IDs to integers
+            try:
+                ids = [int(product_id) for product_id in cart.keys() if product_id.isdigit()]
+            except ValueError as e:
+                # Handle the error (e.g., log it, print it, or handle it in another way)
+                print(f"Error converting product IDs: {e}")
+                ids = []
+            
             products = Product.get_product_id(ids)
             print(products)
             return render(request, 'Store/cart.html', {'product': products})
         else:
             # Handle the case when 'cart' is not in the session or is None
             return render(request, 'Store/cart.html', {'product': []})
+
+
 
     def post(self, request):
         # Your post method logic here
@@ -223,9 +258,7 @@ class CheckOutView(View):
     
 # views.py
 
-from django.shortcuts import render
-from .models import Order
-from django.utils.decorators import method_decorator
+
 # from auth 
 
 
@@ -237,3 +270,33 @@ class ordersView(View):
         # orders = orders.reverse()
         return render(request, 'Store/orders.html', {'orders': orders})
 
+
+
+
+class Company(View):
+    def get(self, request):
+        categories = Category.objects.all()
+        return render(request, 'Store/company.html', {'categories': categories})
+
+    def post(self, request):
+        Name = request.POST.get('Name')
+        Price = request.POST.get('Price')
+        Description = request.POST.get('Description')
+        category_id = request.POST.get('category')  # Get the category ID from the form
+        img = request.FILES.get('img')
+
+        try:
+            category = Category.objects.get(pk=category_id)  # Retrieve the Category instance using the ID
+        except Category.DoesNotExist:
+            category = None  # Handle the case where the category with the given ID does not exist
+
+        product = Product(
+            Name=Name,
+            Price=Price,
+            Description=Description,
+            category=category,  # Assign the Category instance, not the ID
+            img=img,
+        )
+
+        product.save()
+        return HttpResponse("succes")
